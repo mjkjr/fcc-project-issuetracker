@@ -37,13 +37,14 @@ module.exports = function(app) {
 	app.route( '/api/issues/:project' )
 
   .get(function (req, res) {
-
+    
     // get all issues for the given project
     issueModel.find( { project: req.params.project }, (err, data) => {
 
       // filter results
       let results = data[0].issues.filter( (el) => {
         
+        if ( req.query._id         && el._id.toString() != req.query._id ) { return }
         if ( req.query.issue_title && el.issue_title != req.query.issue_title ) { return }
         if ( req.query.issue_text  && el.issue_text  != req.query.issue_text  ) { return }
         if ( req.query.created_on  && el.created_on  != req.query.created_on  ) { return }
@@ -157,9 +158,9 @@ module.exports = function(app) {
             if ( req.body.created_by  !== undefined && req.body.created_by  != '' ) { el.created_by  = req.body.created_by;  }
             if ( req.body.assigned_to !== undefined && req.body.assigned_to != '' ) { el.assigned_to = req.body.assigned_to; }
             if ( req.body.status_text !== undefined && req.body.status_text != '' ) { el.status_text = req.body.status_text; }
-            if ( req.body.created_on  !== undefined && req.body.created_on  != '' ) { el.created_on  = req.body.created_on;  }
-            if ( req.body.updated_on  !== undefined && req.body.updated_on  != '' ) { el.updated_on  = req.body.updated_on;  }
             if ( req.body.open        !== undefined && req.body.open        != '' ) { el.open        = req.body.open;        }
+            
+            el.updated_on = ( new Date( Date.now() ) ).toISOString();
           }
           
           return el;
@@ -168,7 +169,7 @@ module.exports = function(app) {
         issueModel.findOneAndUpdate( { project: req.params.project },
             { $set: { issues: update } }, { new: true }, ( err, data ) => {
           
-          res.json( { _id: req.body._id, result: 'successfully updated' } );
+          res.json( { result: 'successfully updated', _id: req.body._id } );
           return;
         });
       }
